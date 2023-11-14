@@ -24,7 +24,7 @@ unsigned long searchNode(unsigned long id, node *nodes, unsigned long nnodes);
 
 typedef struct queue_element{
     node* node_element;
-    double dist, h_dist; //distance to origin aaaaaaaaaaaaaaaaa
+    double dist, h_dist; //distance to origin
     struct queue_element* next;
     struct queue_element* previuos;
 }queue_element;
@@ -210,7 +210,7 @@ int main(int argc,char *argv[])
     start_time = clock();
 
     if(argc<2){
-        mapfile = fopen(".maps/andorra.csv", "r");
+        mapfile = fopen("andorra.csv", "r");
         printf("Opening map andorra.csv.\n");
     }
     else{
