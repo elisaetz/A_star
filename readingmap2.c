@@ -104,13 +104,15 @@ void requeue_with_priority(queue* priority_qe, queue_element* element_to_order, 
     iterator=priority_qe->start;
     while ((iterator!=NULL)){
         if (distance + heuristic < iterator->h_dist){
-            element_to_order->next = iterator;
-            element_to_order->previuos = iterator->previuos;
             if (iterator->node_element->id == priority_qe->start->node_element->id){
                 priority_qe->start->next = element_to_order->next;
                 priority_qe->start = element_to_order;
             }
-            continue;
+            else{
+                element_to_order->next = iterator;
+                element_to_order->previuos = iterator->previuos;
+            }
+            break;
         }
         else if (iterator->node_element->id == priority_qe->end->node_element->id){
             priority_qe->end->next=element_to_order;
@@ -134,10 +136,12 @@ void update_priority_queue(queue* qe, double provisional_distance, node* node_to
         list[index] = 1;
     }
     else{
-        printf("ja estava \n");
         iterator = qe->start;
+        printf("ja estava \n");
         while (iterator != NULL){
+            printf("bonees \n");
             if ( (node_to_check->id == iterator->node_element->id) && iterator->h_dist > prov_h + provisional_distance){
+                printf("fem requeue \n");
                 requeue_with_priority(qe, iterator, provisional_distance, prov_h);
             }
             iterator = iterator->next;
@@ -182,16 +186,14 @@ ex_queue A_star(node node_list[], node* start, node* goal, unsigned long order){
 
     if(priority_queue.start->node_element->nsucc == 0) return expanded_nodes; //only if we begin with a single, unconnected point in the graph
     
-    while (priority_queue.start != NULL){
-    printf("el id del current es %lu \n", current->node_element->id);  
+    while (priority_queue.start != NULL){ 
         if (current->node_element->id == goal->id) {
-            printf("doncs ja estaria \n");
+            printf("hem arribat, el miracle real ha passat \n");
             break;
         }
         for (i = 0; i < current->node_element->nsucc; i++) {
             double dist_to_current_child = current->dist + get_distance(current->node_element, &node_list[current->node_element->successors[i]]);
             update_priority_queue(&priority_queue, dist_to_current_child, &node_list[current->node_element->successors[i]], goal, enqueued_list, current->node_element->successors[i]);
-            printf("el id del fill es %lu \n", node_list[current->node_element->successors[i]].id);
         }
         expand(&expanded_nodes,&priority_queue,current);
         current = current->next;
@@ -370,15 +372,15 @@ int main(int argc,char *argv[])
     // unsigned long index_start = searchNode(start_id,nodes,nnodes);
     // unsigned long index_goal = searchNode(goal_id,nodes,nnodes);
 
-    node start = nodes[679];
-    node goal = nodes[26709];
+    node start = nodes[951];
+    node goal = nodes[20302];
 
     printf("el id del start es %lu \n", start.id);
     printf("el id del goal es %lu \n", goal.id);
 
     ex_queue shortest_path;
     shortest_path = A_star(nodes, &start, &goal, nnodes);
-    printf("ha passat un miracle ? \n");
+    printf("ha acabat \n");
     return 0;
 }
 
