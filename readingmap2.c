@@ -59,25 +59,21 @@ double get_distance(node* father_node, node* child_node){
 double heuristisc(node* nd, node* goal){
     return get_distance(nd,goal);
 }
-
 // fa falta ficar el parent???
 void enqueue_with_priority(queue* priority_qe, node* node_to_order, double distance, double heuristic){
     struct queue_element* newElement=(queue_element*)malloc(sizeof(queue_element));
     newElement->node_element = node_to_order;
     newElement->dist = distance;
     newElement->h_dist = heuristic + distance;
-    newElement->next=NULL;
+    newElement->next = NULL;
     if (priority_qe->end==NULL && priority_qe->start==NULL){
-        priority_qe->end = newElement;
         priority_qe->start = newElement;
-        priority_qe->start->next = newElement;
-        priority_qe->end->previuos = newElement;
+        priority_qe->end = newElement;
     }
     else{
         struct queue_element* iterator = NULL;
         iterator=priority_qe->start;
-        while ((iterator!=NULL)){
-            printf("hehe \n");
+        while ((iterator != NULL)){
             if (distance + heuristic < iterator->h_dist){
                 newElement->next = iterator;
                 newElement->previuos = iterator->previuos;
@@ -85,10 +81,8 @@ void enqueue_with_priority(queue* priority_qe, node* node_to_order, double dista
                     priority_qe->start->next = newElement->next;
                     priority_qe->start = newElement;
                 }
-                continue;
+                break;
             }
-            printf("el iterator es %lu \n", iterator->node_element->id);
-            printf("el final es %lu \n", priority_qe->end->node_element->id);
             unsigned long id_iterator = iterator->node_element->id;
             unsigned long id_final = priority_qe->end->node_element->id;
             if (id_iterator == id_final){
@@ -127,31 +121,29 @@ void requeue_with_priority(queue* priority_qe, queue_element* element_to_order, 
 }
 //this function will delete the first element of the queue
 void dequeue(queue *qe){
-    qe->start=qe->start->next;
+    queue_element* first=qe->start;
+    qe->start=first->next;
+    free(first);
+    // qe->start = qe->start->next;
 }
 int nodeIsNotEnqueued(queue* qe, node* node_to_check){
     //es podria fer utilitzant la funcio que ja ens ha donat....
     struct queue_element* iterator = NULL;
     iterator = qe->start;
     while (iterator != NULL){
-        printf("aqui es lia :) \n");
         if (iterator->node_element->id == node_to_check->id) {
             printf("pas 1 \n");
             return 0;
             }
         iterator = iterator->next;
-        break;
     }
     return 1;    
 }
-
 void update_priority_queue(queue* qe, double provisional_distance, node* node_to_check, node* goal){
     queue_element* iterator = NULL;
     double prov_h = provisional_distance + heuristisc(node_to_check,goal);
-    if (nodeIsNotEnqueued(qe,node_to_check) == 0){
-        printf("estem aqui \n");
+    if (nodeIsNotEnqueued(qe,node_to_check) == 1){
         enqueue_with_priority(qe, node_to_check, provisional_distance, heuristisc(node_to_check, goal));
-        printf("seguent \n");
     }
     else{
         iterator = qe->start;
@@ -166,23 +158,22 @@ void update_priority_queue(queue* qe, double provisional_distance, node* node_to
 }
 void expand(ex_queue* expanded_qe, queue* priority_qe, queue_element* visited_element){
     //guardem l'element que visitem a una llista i el treiem de l'altra
-    dequeue(priority_qe);
     struct expanded_queue_element* newElement=(expanded_queue_element*)malloc(sizeof(expanded_queue_element));
-	newElement->id = visited_element->node_element->id;
+    newElement->id = visited_element->node_element->id;
     newElement->lat = visited_element->node_element->lat;
     newElement->lon = visited_element ->node_element->lon;
     newElement->distance = visited_element->dist;
-    newElement->next=NULL;
+    newElement->next = NULL;
 	if (expanded_qe->end==NULL && expanded_qe->start==NULL){
         //vigila aqui elisa
 		expanded_qe->end = newElement;
         expanded_qe->start=newElement;
-		expanded_qe->start->next=newElement;
 	}
 	else{
 		expanded_qe->end->next=newElement;
 		expanded_qe->end=newElement;
 	}
+    dequeue(priority_qe);
 }
 //this function applies the BQS algorithm for a list of nodes, starting by the element [root] from that list
 ex_queue A_star(node node_list[], node* start, node* goal, unsigned long order){
@@ -199,8 +190,7 @@ ex_queue A_star(node node_list[], node* start, node* goal, unsigned long order){
     printf("el id del goal es %lu \n", goal->id);
     printf("el id del current es %lu \n", current->node_element->id);
     if(priority_queue.start->node_element->nsucc == 0) return expanded_nodes; //only if we begin with a single, unconnected point in the graph
-    while (priority_queue.start!=NULL){
-        expand(&expanded_nodes,&priority_queue,current);
+    while (priority_queue.start != NULL){
         if (current->node_element->id == goal->id) {
             printf("doncs ja estaria \n");
             break;
@@ -210,10 +200,9 @@ ex_queue A_star(node node_list[], node* start, node* goal, unsigned long order){
             update_priority_queue(&priority_queue, dist_to_current_child, &node_list[current->node_element->successors[i]], goal);
             printf("el index del fill es %lu \n", current->node_element->successors[i]);
         }
+        expand(&expanded_nodes,&priority_queue,current);
         current = current->next;
-        //free(current->previuos);
     }
-
     return expanded_nodes;
 }
 
