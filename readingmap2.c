@@ -47,7 +47,6 @@ typedef struct{
 }ex_queue;
 
 double get_distance(node* father_node, node* child_node){
-    printf("hola? \n");
     double phi_1 = father_node->lat*PI/180;
     double phi_2 = child_node->lat*PI/180;
     double phi_difference = (father_node->lat - child_node->lat)*PI/180;
@@ -68,22 +67,17 @@ void enqueue_with_priority(queue* priority_qe, node* node_to_order, double dista
     newElement->dist = distance;
     newElement->h_dist = heuristic + distance;
     newElement->next=NULL;
-    printf("bonees des de enqueue :)\n");
     if (priority_qe->end==NULL && priority_qe->start==NULL){
-        printf("pas 1\n");
         priority_qe->end = newElement;
-        printf("pas 2\n");
         priority_qe->start = newElement;
-        printf("pas 3\n");
         priority_qe->start->next = newElement;
-        printf("pas 4\n");
         priority_qe->end->previuos = newElement;
-
     }
     else{
         struct queue_element* iterator = NULL;
         iterator=priority_qe->start;
         while ((iterator!=NULL)){
+            printf("hehe \n");
             if (distance + heuristic < iterator->h_dist){
                 newElement->next = iterator;
                 newElement->previuos = iterator->previuos;
@@ -93,9 +87,14 @@ void enqueue_with_priority(queue* priority_qe, node* node_to_order, double dista
                 }
                 continue;
             }
-            else if (iterator->node_element->id == priority_qe->end->node_element->id){
+            printf("el iterator es %lu \n", iterator->node_element->id);
+            printf("el final es %lu \n", priority_qe->end->node_element->id);
+            unsigned long id_iterator = iterator->node_element->id;
+            unsigned long id_final = priority_qe->end->node_element->id;
+            if (id_iterator == id_final){
                 priority_qe->end->next=newElement;
                 priority_qe->end=newElement;
+                break;
             }
             iterator=iterator->next;
         }
@@ -135,8 +134,13 @@ int nodeIsNotEnqueued(queue* qe, node* node_to_check){
     struct queue_element* iterator = NULL;
     iterator = qe->start;
     while (iterator != NULL){
-        if (iterator->node_element->id == node_to_check->id) return 0;
+        printf("aqui es lia :) \n");
+        if (iterator->node_element->id == node_to_check->id) {
+            printf("pas 1 \n");
+            return 0;
+            }
         iterator = iterator->next;
+        break;
     }
     return 1;    
 }
@@ -144,8 +148,10 @@ int nodeIsNotEnqueued(queue* qe, node* node_to_check){
 void update_priority_queue(queue* qe, double provisional_distance, node* node_to_check, node* goal){
     queue_element* iterator = NULL;
     double prov_h = provisional_distance + heuristisc(node_to_check,goal);
-    if (nodeIsNotEnqueued(qe,node_to_check) == 1){
+    if (nodeIsNotEnqueued(qe,node_to_check) == 0){
+        printf("estem aqui \n");
         enqueue_with_priority(qe, node_to_check, provisional_distance, heuristisc(node_to_check, goal));
+        printf("seguent \n");
     }
     else{
         iterator = qe->start;
@@ -179,45 +185,35 @@ void expand(ex_queue* expanded_qe, queue* priority_qe, queue_element* visited_el
 	}
 }
 //this function applies the BQS algorithm for a list of nodes, starting by the element [root] from that list
-ex_queue* A_star(node node_list[], node* start, node* goal, unsigned long order){
-    printf("perque ja no? \n");
+ex_queue A_star(node node_list[], node* start, node* goal, unsigned long order){
     unsigned i;
-    queue* priority_queue;
-    ex_queue* expanded_nodes;
+    queue priority_queue;
+    ex_queue expanded_nodes;
     queue_element* current = NULL;
-    printf("1 \n");
-    expanded_nodes->start = NULL;
-    expanded_nodes->end = NULL;
-    printf("2 \n");
-    priority_queue->start = NULL;
-    priority_queue->end = NULL;
-    printf("AAAAAAAAAAAAAA \n");
-    enqueue_with_priority(priority_queue, start, 0, get_distance(start, goal));
-    printf("perque ja no? \n");
-    current = priority_queue->start;
+    expanded_nodes.start = NULL;
+    expanded_nodes.end = NULL;
+    priority_queue.start = NULL;
+    priority_queue.end = NULL;
+    enqueue_with_priority(&priority_queue, start, 0, get_distance(start, goal));
+    current = priority_queue.start;
     printf("el id del goal es %lu \n", goal->id);
     printf("el id del current es %lu \n", current->node_element->id);
-    if(priority_queue->start->node_element->nsucc == 0) return expanded_nodes; //only if we begin with a single, unconnected point in the graph
-    while (priority_queue->start!=NULL){
-        expand(expanded_nodes,priority_queue,current);
+    if(priority_queue.start->node_element->nsucc == 0) return expanded_nodes; //only if we begin with a single, unconnected point in the graph
+    while (priority_queue.start!=NULL){
+        expand(&expanded_nodes,&priority_queue,current);
         if (current->node_element->id == goal->id) {
             printf("doncs ja estaria \n");
             break;
         }
         for (i = 0; i < current->node_element->nsucc; i++) {
-            printf("uffff \n");
-            node child = node_list[searchNode(current->node_element->successors[i], node_list, order)];
-            printf("it's a hard life \n");
-            double proves = get_distance(current->node_element, &child);
-            printf("to be true lover together \n");
-            double dist_to_current_child = current->dist + proves;
-            printf("com anem? \n");
-            update_priority_queue(priority_queue, dist_to_current_child, current->node_element, goal);
-            printf("funciona el requeue ? \n");
+            double dist_to_current_child = current->dist + get_distance(current->node_element, &node_list[current->node_element->successors[i]]);
+            update_priority_queue(&priority_queue, dist_to_current_child, &node_list[current->node_element->successors[i]], goal);
+            printf("el index del fill es %lu \n", current->node_element->successors[i]);
         }
         current = current->next;
         //free(current->previuos);
     }
+
     return expanded_nodes;
 }
 
@@ -398,8 +394,7 @@ int main(int argc,char *argv[])
     printf("el id del start es %lu \n", start.id);
     printf("el id del goal es %lu \n", goal.id);
 
-    ex_queue* shortest_path = NULL;
-    printf("yeyy \n");
+    ex_queue shortest_path;
     shortest_path = A_star(nodes, &start, &goal, nnodes);
     printf("ha passat un miracle ? \n");
 
