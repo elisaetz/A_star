@@ -47,6 +47,7 @@ typedef struct{
 }ex_queue;
 
 double get_distance(node* father_node, node* child_node){
+    printf("hola? \n");
     double phi_1 = father_node->lat*PI/180;
     double phi_2 = child_node->lat*PI/180;
     double phi_difference = (father_node->lat - child_node->lat)*PI/180;
@@ -179,31 +180,40 @@ void expand(ex_queue* expanded_qe, queue* priority_qe, queue_element* visited_el
 }
 //this function applies the BQS algorithm for a list of nodes, starting by the element [root] from that list
 ex_queue* A_star(node node_list[], node* start, node* goal, unsigned long order){
+    printf("perque ja no? \n");
     unsigned i;
     queue* priority_queue;
     ex_queue* expanded_nodes;
     queue_element* current = NULL;
+    printf("1 \n");
     expanded_nodes->start = NULL;
     expanded_nodes->end = NULL;
+    printf("2 \n");
     priority_queue->start = NULL;
     priority_queue->end = NULL;
+    printf("AAAAAAAAAAAAAA \n");
     enqueue_with_priority(priority_queue, start, 0, get_distance(start, goal));
-    printf("funciona el enqueue bieeen\n");
+    printf("perque ja no? \n");
     current = priority_queue->start;
     printf("el id del goal es %lu \n", goal->id);
     printf("el id del current es %lu \n", current->node_element->id);
-    // if(priority_queue->start->node_element->nsucc == 0) return expanded_nodes; //only if we begin with a single, unconnected point in the graph
+    if(priority_queue->start->node_element->nsucc == 0) return expanded_nodes; //only if we begin with a single, unconnected point in the graph
     while (priority_queue->start!=NULL){
         expand(expanded_nodes,priority_queue,current);
-        printf("hola4 \n");
         if (current->node_element->id == goal->id) {
             printf("doncs ja estaria \n");
             break;
         }
-        printf(":( \n");
         for (i = 0; i < current->node_element->nsucc; i++) {
-            double dist_to_current_child = current->dist + get_distance(current->node_element, &node_list[searchNode(current->node_element->successors[i], node_list, order)]);
+            printf("uffff \n");
+            node child = node_list[searchNode(current->node_element->successors[i], node_list, order)];
+            printf("it's a hard life \n");
+            double proves = get_distance(current->node_element, &child);
+            printf("to be true lover together \n");
+            double dist_to_current_child = current->dist + proves;
+            printf("com anem? \n");
             update_priority_queue(priority_queue, dist_to_current_child, current->node_element, goal);
+            printf("funciona el requeue ? \n");
         }
         current = current->next;
         //free(current->previuos);
@@ -377,14 +387,22 @@ int main(int argc,char *argv[])
     for(int i=0; i<nodes[index].nsucc; i++) printf("  Node %lu with id %lu.\n",nodes[index].successors[i], nodes[nodes[index].successors[i]].id);
 
     //my code
-    unsigned long start_id = 240949599;
-    unsigned long goal_id = 195977239;
-    node start = nodes[searchNode(start_id,nodes,nnodes)];
-    node goal = nodes[searchNode(goal_id,nodes,nnodes)];
+    // unsigned long start_id = 240949599;
+    // unsigned long goal_id = 195977239;
+    // unsigned long index_start = searchNode(start_id,nodes,nnodes);
+    // unsigned long index_goal = searchNode(goal_id,nodes,nnodes);
+
+    node start = nodes[28];
+    node goal = nodes[26709];
+
+    printf("el id del start es %lu \n", start.id);
     printf("el id del goal es %lu \n", goal.id);
+
     ex_queue* shortest_path = NULL;
+    printf("yeyy \n");
     shortest_path = A_star(nodes, &start, &goal, nnodes);
     printf("ha passat un miracle ? \n");
+
     return 0;
 }
 
