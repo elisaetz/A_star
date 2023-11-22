@@ -202,10 +202,12 @@ void expand(ex_queue* expanded_qe, queue* priority_qe, queue_element* visited_el
 //this function applies the BQS algorithm for a list of nodes, starting by the element [root] from that list
 ex_queue A_star(node node_list[], node* start, node* goal, unsigned long order){
     unsigned i;
-    unsigned enqueued_list[order];
+    unsigned* enqueued_list;
     queue priority_queue;
     ex_queue expanded_nodes;
     queue_element* current = NULL;
+
+    enqueued_list = (unsigned*)malloc(order*sizeof(unsigned));
 
     expanded_nodes.start = NULL;
     expanded_nodes.end = NULL;

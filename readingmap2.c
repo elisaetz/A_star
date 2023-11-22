@@ -203,11 +203,14 @@ void expand(ex_queue* expanded_qe, queue* priority_qe, queue_element* visited_el
 }
 //this function applies the BQS algorithm for a list of nodes, starting by the element [root] from that list
 ex_queue A_star(node node_list[], node* start, node* goal, unsigned long order){
+    printf("hola des de dins \n");
     unsigned i;
-    unsigned enqueued_list[order];
+    unsigned* enqueued_list;
     queue priority_queue;
     ex_queue expanded_nodes;
     queue_element* current = NULL;
+
+    enqueued_list = (unsigned*)malloc(order*sizeof(unsigned));
 
     expanded_nodes.start = NULL;
     expanded_nodes.end = NULL;
@@ -220,6 +223,7 @@ ex_queue A_star(node node_list[], node* start, node* goal, unsigned long order){
 
     if(priority_queue.start->node_element->nsucc == 0) return expanded_nodes; //only if we begin with a single, unconnected point in the graph
     
+    printf("hehe \n");
     while (priority_queue.start != NULL){ 
         if (current->node_element->id == goal->id) {
             printf("hem arribat, el miracle real ha passat \n");

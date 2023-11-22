@@ -13,10 +13,10 @@
 
 typedef struct {
     unsigned long id; // Node identification
-    char name[200]; // in an optimal implementation it must change to a pointer
+    char* name; // in an optimal implementation it must change to a pointer
     double lat, lon;  // Node position
     unsigned short nsucc;  // Number of node successors; i. e. length of successors
-    unsigned long successors[MAXSUCC]; // in an optimal implementation it must change to a pointer
+    unsigned long* successors; // in an optimal implementation it must change to a pointer
 } node;
 
 unsigned long searchNode(unsigned long id, node *nodes, unsigned long nnodes);
@@ -193,7 +193,14 @@ int main(int argc,char *argv[])
     binmapfile = fopen(binmapname,"wb");
     fwrite(&nnodes,sizeof(unsigned long),1,binmapfile);
     fwrite(nodes,sizeof(node),nnodes,binmapfile);
-    
+    for (int i = 0; i < nnodes; i++){
+        unsigned name_size = strlen(nodes[i].name);
+        fwrite(&name_size, sizeof(unsigned),1,binmapfile);
+        fwrite(nodes[i].name, sizeof(char),strlen(nodes[i].name), binmapfile);
+    }
+    for (int i = 0; i < nnodes; i++){
+        fwrite(nodes[i].successors, sizeof(unsigned),nodes[i].nsucc,binmapfile);
+    }
     fclose(binmapfile);
 
     return 0;
