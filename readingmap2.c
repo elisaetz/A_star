@@ -9,7 +9,7 @@
 #include <math.h>
 
 #define MAXSUCC 23  // in an optimal implementation it must be removed
-#define R_earth 6371 // in km ?
+#define R_earth 6371000 // in m ?
 #define PI 3.141592653589793238462643383279502884197 
 
 typedef struct {
@@ -50,13 +50,17 @@ void print_queue(queue* qe){
     printf("the queueue has \n");
     queue_element* iterator = NULL;
     iterator = qe->start;
+    int i = 0;
     while (iterator != NULL){
-        printf("the element with id %lu\n", iterator->node_element->id);
+        printf("the element with id %lu and distance %lf \n", iterator->node_element->id, iterator->h_dist);
         iterator = iterator->next;
+        i++;
+        if(i>10) break;
     }
 }
 
 double get_distance(node* father_node, node* child_node){
+    if (father_node->id == child_node->id) return 0;
     double phi_1 = father_node->lat*PI/180;
     double phi_2 = child_node->lat*PI/180;
     double phi_difference = (father_node->lat - child_node->lat)*PI/180;
@@ -88,23 +92,24 @@ void enqueue_with_priority(queue* priority_qe, node* node_to_order, double dista
             if (newElement->h_dist < iterator->h_dist){
                 printf("dist \n");
                 if (iterator->node_element->id == priority_qe->start->node_element->id){
-                    printf("principi \n");
+                    printf("principi, mal vamos \n");
                     priority_qe->start->next = newElement->next;
                     priority_qe->start->next->previuos = newElement->previuos;
                     priority_qe->start = newElement;
                 }
                 else{
-                    iterator->previuos->next = newElement;
-                    newElement->next = iterator;
                     newElement->previuos = iterator->previuos;
+                    newElement->next = iterator;
+                    iterator->previuos->next = newElement;
+                    iterator->previuos = newElement;
                 }
                 break;
             }
             else if (iterator->node_element->id == priority_qe->end->node_element->id){
                 printf("final \n");
-                priority_qe->end->next=newElement;
+                iterator->next = newElement;
                 newElement->previuos = priority_qe->end;
-                priority_qe->end=newElement;
+                priority_qe->end = newElement;
                 break;
             }
             iterator=iterator->next;
@@ -113,27 +118,45 @@ void enqueue_with_priority(queue* priority_qe, node* node_to_order, double dista
 }
 void requeue_with_priority(queue* priority_qe, queue_element* element_to_order, double distance, double heuristic){
     //take element from queue
-    element_to_order->previuos->next = element_to_order->next;
-    element_to_order->next->previuos = element_to_order->previuos;
+    // struct queue_element* newElement=(queue_element*)malloc(sizeof(queue_element));
+    // update distance and remove the position
     element_to_order->dist = distance;
     element_to_order->h_dist = heuristic + distance;
+    if (element_to_order->node_element->id == priority_qe->end->node_element->id){
+        // I si nomes hi ha 1 element ???!!!!!
+        element_to_order->previuos->next = NULL;
+        priority_qe->end = element_to_order->previuos;
+    }
+    else{
+        element_to_order->previuos->next = element_to_order->next;
+        element_to_order->next->previuos = element_to_order->previuos;
+    }
+    element_to_order->next = NULL;
+    element_to_order->previuos = NULL;
     struct queue_element* iterator = NULL;
     iterator=priority_qe->start;
     while ((iterator!=NULL)){
-        if (distance + heuristic < iterator->h_dist){
+        printf("hola? \n");
+        if (element_to_order->h_dist < iterator->h_dist){
             if (iterator->node_element->id == priority_qe->start->node_element->id){
+                printf("MAL \n");
                 priority_qe->start->next = element_to_order->next;
+                priority_qe->start->next->previuos = element_to_order->previuos;
                 priority_qe->start = element_to_order;
             }
             else{
-                element_to_order->next = iterator;
                 element_to_order->previuos = iterator->previuos;
+                element_to_order->next = iterator;
+                iterator->previuos->next = element_to_order;
+                iterator->previuos = element_to_order;
             }
             break;
         }
         else if (iterator->node_element->id == priority_qe->end->node_element->id){
-            priority_qe->end->next=element_to_order;
-            priority_qe->end=element_to_order;
+            iterator->next = element_to_order;
+            element_to_order->previuos = priority_qe->end;
+            priority_qe->end = element_to_order;
+            break;
         }
         iterator=iterator->next;
     }
@@ -160,6 +183,7 @@ void update_priority_queue(queue* qe, double provisional_distance, node* node_to
             if ((node_to_check->id == iterator->node_element->id) && iterator->h_dist > prov_h){
                 printf("fem requeue \n");
                 requeue_with_priority(qe, iterator, provisional_distance, heuristisc(iterator->node_element, goal));
+                break;
             }
             iterator = iterator->next;
         }
@@ -392,8 +416,8 @@ int main(int argc,char *argv[])
     // unsigned long index_start = searchNode(start_id,nodes,nnodes);
     // unsigned long index_goal = searchNode(goal_id,nodes,nnodes);
 
-    node start = nodes[13304];
-    node goal = nodes[36450];
+    node start = nodes[78];
+    node goal = nodes[31978];
 
     printf("el id del start es %lu \n", start.id);
     printf("el id del goal es %lu \n", goal.id);
