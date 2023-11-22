@@ -246,7 +246,7 @@ int main(int argc,char *argv[])
     start_time = clock();
 
     if(argc<2){
-        mapfile = fopen("andorra.csv", "r");
+        mapfile = fopen("../maps/spain.csv", "r");
         printf("Opening map andorra.csv.\n");
     }
     else{

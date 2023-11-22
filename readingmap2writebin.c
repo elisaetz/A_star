@@ -193,6 +193,7 @@ int main(int argc,char *argv[])
     binmapfile = fopen(binmapname,"wb");
     fwrite(&nnodes,sizeof(unsigned long),1,binmapfile);
     fwrite(nodes,sizeof(node),nnodes,binmapfile);
+    
     fclose(binmapfile);
 
     return 0;
