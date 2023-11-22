@@ -90,6 +90,7 @@ void enqueue_with_priority(queue* priority_qe, node* node_to_order, double dista
                 if (iterator->node_element->id == priority_qe->start->node_element->id){
                     printf("principi \n");
                     priority_qe->start->next = newElement->next;
+                    priority_qe->start->next->previuos = newElement->previuos;
                     priority_qe->start = newElement;
                 }
                 else{
@@ -97,7 +98,6 @@ void enqueue_with_priority(queue* priority_qe, node* node_to_order, double dista
                     newElement->next = iterator;
                     newElement->previuos = iterator->previuos;
                 }
-                
                 break;
             }
             else if (iterator->node_element->id == priority_qe->end->node_element->id){
@@ -155,12 +155,11 @@ void update_priority_queue(queue* qe, double provisional_distance, node* node_to
     }
     else{
         iterator = qe->start;
-        printf("ja estava \n");
+        printf("ja ha estat %lu \n", node_to_check->id);
         while (iterator != NULL){
-            printf("bonees \n");
             if ((node_to_check->id == iterator->node_element->id) && iterator->h_dist > prov_h){
                 printf("fem requeue \n");
-                requeue_with_priority(qe, iterator, provisional_distance, prov_h);
+                requeue_with_priority(qe, iterator, provisional_distance, heuristisc(iterator->node_element, goal));
             }
             iterator = iterator->next;
         }
@@ -393,8 +392,8 @@ int main(int argc,char *argv[])
     // unsigned long index_start = searchNode(start_id,nodes,nnodes);
     // unsigned long index_goal = searchNode(goal_id,nodes,nnodes);
 
-    node start = nodes[23];
-    node goal = nodes[29902];
+    node start = nodes[13304];
+    node goal = nodes[36450];
 
     printf("el id del start es %lu \n", start.id);
     printf("el id del goal es %lu \n", goal.id);
