@@ -10,7 +10,6 @@
 
 #define MAXSUCC 23  // in an optimal implementation it must be removed
 
-
 typedef struct {
     unsigned long id; // Node identification
     char* name; // in an optimal implementation it must change to a pointer
@@ -60,9 +59,12 @@ int main(int argc,char *argv[])
     node *nodes;
     char *tmpline , *field , *ptr;
     unsigned long index=0;
-
+    unsigned short* nsuccdim;
+    
     nodes = (node*) malloc(nnodes*sizeof(node));
-    if(nodes==NULL){
+    nsuccdim = (unsigned short*)malloc(nnodes*sizeof(unsigned short));
+
+    if(nodes==NULL || nsuccdim==NULL){
         printf("Error when allocating the memory for the nodes\n");
         return 2;
     }
@@ -77,6 +79,7 @@ int main(int argc,char *argv[])
             field = strsep(&tmpline, "|");
             nodes[index].id = strtoul(field, &ptr, 10);
             field = strsep(&tmpline, "|");
+            nodes[index].name = (char*)malloc(strlen(field)*sizeof(char));
             strcpy(nodes[index].name,field);
             for (int i = 0; i < 7; i++)
                 field = strsep(&tmpline, "|");
@@ -84,7 +87,9 @@ int main(int argc,char *argv[])
             field = strsep(&tmpline, "|");
             nodes[index].lon = atof(field);
 
+
             nodes[index].nsucc = 0; // start with 0 successors
+            nsuccdim[index] = 0;
 
             index++;
         }
@@ -98,6 +103,58 @@ int main(int argc,char *argv[])
     // start_time = clock();
     int oneway;
     unsigned long nedges = 0, origin, dest, originId, destId;
+    
+    // first we count the number of successors, for allocating the memory
+    while (getline(&line, &len, mapfile) != -1)
+    {
+        if (strncmp(line, "#", 1) == 0) continue;
+        tmpline = line; // make a copy of line to tmpline to keep the pointer of line
+        field = strsep(&tmpline, "|");
+        if (strcmp(field, "way") == 0)
+        {
+            for (int i = 0; i < 7; i++) field = strsep(&tmpline, "|"); // skip 7 fields
+            if (strcmp(field, "") == 0) oneway = 0; // no oneway
+            else if (strcmp(field, "oneway") == 0) oneway = 1;
+            else continue; // No correct information
+            field = strsep(&tmpline, "|"); // skip 1 field
+            field = strsep(&tmpline, "|");
+            if (field == NULL) continue;
+            originId = strtoul(field, &ptr, 10);
+            origin = searchNode(originId,nodes,nnodes);
+            while(1)
+            {
+                field = strsep(&tmpline, "|");
+                if (field == NULL) break;
+                destId = strtoul(field, &ptr, 10);
+                dest = searchNode(destId,nodes,nnodes);
+                if((origin == nnodes+1)||(dest == nnodes+1)){
+                    originId = destId;
+                    origin = dest;
+                    continue;
+                }
+                if(origin==dest) continue;
+                nsuccdim[origin]++;
+                if(!oneway){   
+                    nsuccdim[dest]++;
+                }
+                originId = destId;
+                origin = dest;
+            }
+        }
+    }
+    unsigned sum_1=0;
+    for (int i=0;i<nnodes;i++){
+        sum_1 = sum_1 + nsuccdim[i];
+    }
+    printf("incial number of edges is %u \n", sum_1);
+
+    //we allocate the memory for all the nodes
+    for (int i = 0; i < nnodes; i++){
+        nodes[i].successors = (unsigned long*)malloc(nsuccdim[i]*sizeof(unsigned long));
+    }
+
+    rewind(mapfile);
+
     while (getline(&line, &len, mapfile) != -1)
     {
         if (strncmp(line, "#", 1) == 0) continue;
@@ -131,14 +188,13 @@ int main(int argc,char *argv[])
                 int newdest = 1;
                 for(int i=0;i<nodes[origin].nsucc;i++)
                     if(nodes[origin].successors[i]==dest){
+                        nsuccdim[origin]--;
+                        unsigned long* temp = (unsigned long*)realloc(nodes[origin].successors,(nsuccdim[origin])*sizeof(unsigned long));
+                        nodes[origin].successors = temp;
                         newdest = 0;
                         break;
                     }
                 if(newdest){
-                    if(nodes[origin].nsucc>=MAXSUCC){
-                        printf("Maximum number of successors (%d) reached in node %lu.\n",MAXSUCC,nodes[origin].id);
-                        return 5;
-                    }
                     nodes[origin].successors[nodes[origin].nsucc]=dest;
                     nodes[origin].nsucc++;
                     nedges++;
@@ -149,14 +205,13 @@ int main(int argc,char *argv[])
                     int newor = 1;
                     for(int i=0;i<nodes[dest].nsucc;i++)
                         if(nodes[dest].successors[i]==origin){
+                            nsuccdim[dest]--;
+                            unsigned long* temp = (unsigned long*)realloc(nodes[dest].successors, (nsuccdim[dest])*sizeof(unsigned long));
+                            nodes[dest].successors = temp;
                             newor = 0;
                             break;
                         }
                     if(newor){
-                        if(nodes[dest].nsucc>=MAXSUCC){
-                            printf("Maximum number of successors (%d) reached in node %lu.\n",MAXSUCC,nodes[dest].id);
-                            return 5;
-                        }
                         nodes[dest].successors[nodes[dest].nsucc]=origin;
                         nodes[dest].nsucc++;
                         nedges++;
@@ -185,6 +240,14 @@ int main(int argc,char *argv[])
     printf("Node %lu has id=%lu and %u successors:\n",index,nodes[index].id, nodes[index].nsucc);
     for(int i=0; i<nodes[index].nsucc; i++) printf("  Node %lu with id %lu.\n",nodes[index].successors[i], nodes[nodes[index].successors[i]].id);
 
+    unsigned sum_2=0;
+    for (int i=0;i<nnodes;i++){
+        sum_2 = sum_2 + nsuccdim[i];
+    }
+    printf("incial number of edges is %u \n", sum_2);
+
+    unsigned name_size;
+
     FILE *binmapfile;
     char binmapname[80];
     strcpy(binmapname,mapname);
@@ -194,21 +257,19 @@ int main(int argc,char *argv[])
     fwrite(&nnodes,sizeof(unsigned long),1,binmapfile);
     fwrite(nodes,sizeof(node),nnodes,binmapfile);
     for (int i = 0; i < nnodes; i++){
-        unsigned name_size = strlen(nodes[i].name);
+        name_size = strlen(nodes[i].name);
         fwrite(&name_size, sizeof(unsigned),1,binmapfile);
-        fwrite(nodes[i].name, sizeof(char),strlen(nodes[i].name), binmapfile);
+        fwrite(nodes[i].name,sizeof(char),name_size,binmapfile);
     }
     for (int i = 0; i < nnodes; i++){
-        fwrite(nodes[i].successors, sizeof(unsigned),nodes[i].nsucc,binmapfile);
+        fwrite(nodes[i].successors, sizeof(unsigned long),nodes[i].nsucc,binmapfile);
     }
     fclose(binmapfile);
 
     return 0;
-
 }
 
-unsigned long searchNode(unsigned long id, node *nodes, unsigned long nnodes)
-{
+unsigned long searchNode(unsigned long id, node *nodes, unsigned long nnodes){
     // we know that the nodes where numrically ordered by id, so we can do a binary search.
     unsigned long l = 0, r = nnodes - 1, m;
     while (l <= r)

@@ -12,10 +12,10 @@
 
 typedef struct {
     unsigned long id; // Node identification
-    char name[200]; // in an optimal implementation it must change to a pointer
+    char* name; // in an optimal implementation it must change to a pointer
     double lat, lon;  // Node position
     unsigned short nsucc;  // Number of node successors; i. e. length of successors
-    unsigned long successors[MAXSUCC]; // in an optimal implementation it must change to a pointer
+    unsigned long* successors; // in an optimal implementation it must change to a pointer
 } node;
 
 unsigned long searchNode(unsigned long id, node *nodes, unsigned long nnodes);
@@ -240,6 +240,8 @@ int main(int argc,char *argv[])
 {
     clock_t start_time;
     unsigned long nnodes;
+    unsigned i;
+    unsigned name_size;
 
     start_time = clock();
 
@@ -263,8 +265,21 @@ int main(int argc,char *argv[])
     }
 
     fread(nodes,sizeof(node),nnodes,binmapfile);
+    unsigned num_edges = 0;
+    for (i=0; i<nnodes; i++){
+        nodes[i].successors = (unsigned long*)malloc(nodes[i].nsucc*sizeof(unsigned long));
+        num_edges = num_edges + nodes[i].nsucc;
+    }
+    printf("the num of edges is %u \n",num_edges);
+    for (i=0; i<nnodes; i++){
+        fread(&name_size,sizeof(unsigned),1,binmapfile);
+        nodes[i].name = (char*)malloc((name_size)*sizeof(char));
+        fread(nodes[i].name,sizeof(char),name_size,binmapfile);
+    }
+    for (i=0; i<nnodes; i++){
+        fread(nodes[i].successors,sizeof(unsigned long),nodes[i].nsucc,binmapfile);
+    }
     fclose(binmapfile);
-
     printf("Total number of nodes is %ld\n", nnodes);
     printf("Elapsed time: %f seconds\n", (float)(clock() - start_time) / CLOCKS_PER_SEC);
 
@@ -300,6 +315,9 @@ int main(int argc,char *argv[])
 
     ex_queue shortest_path;
     shortest_path = A_star(nodes, &start, &goal, nnodes);
+
+
+    free(nodes);
     return 0;
 
 }
