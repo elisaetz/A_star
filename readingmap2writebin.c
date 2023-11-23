@@ -31,7 +31,7 @@ int main(int argc,char *argv[])
     start_time = clock();
 
     char mapname[80];
-    strcpy(mapname,"andorra.csv");
+    strcpy(mapname,"../maps/spain.csv");
 
     if(argc>1) strcpy(mapname,argv[1]);
 
@@ -69,6 +69,8 @@ int main(int argc,char *argv[])
         return 2;
     }
 
+    printf("bon dia \n");
+
     while (getline(&line, &len, mapfile) != -1)
     {
         if (strncmp(line, "#", 1) == 0) continue;
@@ -86,7 +88,6 @@ int main(int argc,char *argv[])
             nodes[index].lat = atof(field);
             field = strsep(&tmpline, "|");
             nodes[index].lon = atof(field);
-
 
             nodes[index].nsucc = 0; // start with 0 successors
             nsuccdim[index] = 0;
@@ -265,7 +266,6 @@ int main(int argc,char *argv[])
         fwrite(nodes[i].successors, sizeof(unsigned long),nodes[i].nsucc,binmapfile);
     }
     fclose(binmapfile);
-
     return 0;
 }
 
